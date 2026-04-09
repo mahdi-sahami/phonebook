@@ -1,0 +1,16 @@
+{% extends 'contacts/base.html' %}
+{% block title %}Create Contact{% endblock %}
+{% block content %}
+<section class="form-card glass-card">
+    <h2>Create Contact</h2>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="field">{{ form.name.label_tag }}{{ form.name }}{{ form.name.errors }}</div>
+        <div class="field">{{ form.phone.label_tag }}{{ form.phone }}{{ form.phone.errors }}</div>
+        <div class="field">{{ form.email.label_tag }}{{ form.email }}{{ form.email.errors }}</div>
+        <div class="field">{{ form.address.label_tag }}{{ form.address }}{{ form.address.errors }}</div>
+        <button type="submit" class="btn btn-primary">Save Contact</button>
+    </form>
+</section>
+{% endblock %}

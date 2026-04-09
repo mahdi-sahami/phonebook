@@ -1,0 +1,29 @@
+{% extends 'contacts/base.html' %}
+
+{% block title %}Register · ContactHub Pro{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+    <div class="auth-card glass-card">
+        <div class="auth-copy">
+            <span class="eyebrow">Create account</span>
+            <h2>Join the platform</h2>
+            <p>Build your secure account and start managing your contacts beautifully.</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="field">{{ form.username.label_tag }}{{ form.username }}{{ form.username.errors }}</div>
+            <div class="field">{{ form.password.label_tag }}{{ form.password }}{{ form.password.errors }}</div>
+            <div class="field">{{ form.confirm_password.label_tag }}{{ form.confirm_password }}{{ form.confirm_password.errors }}</div>
+            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </form>
+
+        <p class="auth-switch">
+            Already registered?
+            <a href="{% url 'contacts:login' %}">Sign in</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

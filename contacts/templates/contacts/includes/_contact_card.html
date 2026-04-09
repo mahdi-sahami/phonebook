@@ -1,0 +1,21 @@
+{% load contacts_ui %}
+<article class="contact-card glass-card">
+    <div class="contact-card__header">
+        <div class="avatar">{{ contact.name|contact_initials }}</div>
+        <div>
+            <h3>{{ contact.name }}</h3>
+            <p>{{ contact.phone }}</p>
+        </div>
+        <span class="badge">{{ contact|filled_count }}/4 filled</span>
+    </div>
+
+    <div class="contact-card__body">
+        <p><strong>Email:</strong> {{ contact.email|default:"Not provided" }}</p>
+        <p><strong>Address:</strong> {{ contact.address|default:"Not provided" }}</p>
+    </div>
+
+    <div class="contact-card__footer">
+        <a href="{% url 'contacts:edit' contact.id %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'contacts:delete' contact.id %}" class="btn btn-danger-outline">Delete</a>
+    </div>
+</article>

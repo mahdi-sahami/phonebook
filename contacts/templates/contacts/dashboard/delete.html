@@ -1,0 +1,12 @@
+{% extends 'contacts/base.html' %}
+{% block content %}
+<section class="form-card glass-card danger-zone">
+    <h2>Delete Contact</h2>
+    <p>This action cannot be undone.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a href="{% url 'contacts:dashboard' %}" class="btn btn-ghost">Cancel</a>
+    </form>
+</section>
+{% endblock %}

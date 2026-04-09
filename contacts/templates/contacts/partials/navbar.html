@@ -1,0 +1,28 @@
+<header class="navbar glass">
+    <div class="navbar-left">
+        <h2 class="logo">📇 ContactHub</h2>
+    </div>
+
+    <div class="navbar-center">
+        <form method="get" action="{% url 'contacts:dashboard' %}" class="search-form">
+            <input 
+                type="text" 
+                name="q" 
+                placeholder="Search contacts..." 
+                value="{{ request.GET.q }}" 
+                class="search-input"
+            >
+        </form>
+    </div>
+
+    <div class="navbar-right">
+        <span class="user-badge">
+            👤 {{ request.user.username|default:"Guest" }}
+        </span>
+
+        <form method="post" action="{% url 'contacts:logout' %}">
+            {% csrf_token %}
+            <button class="btn-logout">Logout</button>
+        </form>
+    </div>
+</header>

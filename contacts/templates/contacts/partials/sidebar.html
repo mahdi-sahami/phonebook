@@ -1,0 +1,28 @@
+{% load contacts_ui %}
+<aside class="sidebar glass-card">
+    <div class="brand">
+        <div class="brand-logo">C</div>
+        <div>
+            <h1>{{ portfolio_brand_name }}</h1>
+            <p>{{ portfolio_tagline }}</p>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <a href="{% url 'contacts:dashboard' %}" class="nav-link {% active_class request 'dashboard' %}">
+            Dashboard
+        </a>
+        <a href="{% url 'contacts:create' %}" class="nav-link {% active_class request 'create' %}">
+            New Contact
+        </a>
+    </nav>
+
+    <form method="post" action="{% url 'contacts:logout' %}" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-block">Logout</button>
+    </form>
+</aside>
+
+
+
+

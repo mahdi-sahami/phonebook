@@ -1,0 +1,112 @@
+{% extends 'contacts/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard · Contact Book{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+  {% include 'contacts/partials/sidebar.html' %}
+
+  <main class="app-main">
+
+    <!-- hero -->
+    <section class="hero-panel glass-card">
+      <h2>☎ Contact Book</h2>
+      <a href="{% url 'contacts:create' %}" class="btn btn-primary">+ Add Contact</a>
+    </section>
+
+    <!-- filters -->
+    <section class="filters-panel glass-card">
+      <form method="get" class="filters-form" id="search-form" autocomplete="off">
+        <div class="search-group">
+          <input type="text" name="q" id="global-search"
+                 value="{{ request.GET.q }}"
+                 placeholder="Search name, phone, email…"
+                 class="input"
+                 data-suggestions-url="{% url 'contacts:search_suggestions' %}">
+          <div id="suggestions-box" class="suggestions-box"></div>
+        </div>
+        <input type="text" name="email"   value="{{ request.GET.email }}"   placeholder="Email filter"   class="input">
+        <input type="text" name="address" value="{{ request.GET.address }}" placeholder="Address filter" class="input">
+        <select name="ordering" class="input">
+          <option value="">Sort contacts</option>
+          <option value="name"   {% if request.GET.ordering == 'name'   %}selected{% endif %}>Name A–Z</option>
+          <option value="-name"  {% if request.GET.ordering == '-name'  %}selected{% endif %}>Name Z–A</option>
+          <option value="phone"  {% if request.GET.ordering == 'phone'  %}selected{% endif %}>Phone A–Z</option>
+          <option value="-phone" {% if request.GET.ordering == '-phone' %}selected{% endif %}>Phone Z–A</option>
+        </select>
+        <button type="submit" class="btn btn-secondary">Apply</button>
+        <a href="{% url 'contacts:dashboard' %}" class="btn btn-ghost">Reset</a>
+      </form>
+    </section>
+
+    <!-- stats + view toggle -->
+    <div class="vt-bar">
+      <div class="stat-card glass-card">
+        <span>Total</span>
+        <strong>{{ contact_count }}</strong>
+      </div>
+
+      <div class="vt-group" id="vt-group">
+        <button class="vt-btn active" data-mode="grid" onclick="setView('grid')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          Grid
+        </button>
+        <button class="vt-btn" data-mode="list" onclick="setView('list')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+          Lista
+        </button>
+        <button class="vt-btn" data-mode="small" onclick="setView('small')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="10" y="3" width="5" height="5" rx="1"/><rect x="17" y="3" width="5" height="5" rx="1"/>
+            <rect x="3" y="10" width="5" height="5" rx="1"/><rect x="10" y="10" width="5" height="5" rx="1"/><rect x="17" y="10" width="5" height="5" rx="1"/>
+            <rect x="3" y="17" width="5" height="5" rx="1"/><rect x="10" y="17" width="5" height="5" rx="1"/><rect x="17" y="17" width="5" height="5" rx="1"/>
+          </svg>
+          Piccolo
+        </button>
+        <button class="vt-btn" data-mode="large" onclick="setView('large')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/>
+            <rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/>
+          </svg>
+          Grande
+        </button>
+      </div>
+    </div>
+
+    <!-- cards -->
+    <section id="contacts-grid">
+      {% for contact in contacts %}
+        {% include 'contacts/includes/_contact_card.html' with contact=contact %}
+      {% empty %}
+        {% include 'contacts/includes/_empty_state.html' %}
+      {% endfor %}
+    </section>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'contacts/js/live_search.js' %}"></script>
+<script>
+var MODES = ['grid','list','small','large'];
+function setView(mode) {
+  var grid  = document.getElementById('contacts-grid');
+  var group = document.getElementById('vt-group');
+  MODES.forEach(function(m){ grid.classList.remove('mode-'+m); });
+  grid.classList.add('mode-'+mode);
+  group.querySelectorAll('.vt-btn').forEach(function(btn){
+    btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
+  });
+  localStorage.setItem('contactViewMode', mode);
+}
+var saved = localStorage.getItem('contactViewMode') || 'grid';
+setView(saved);
+</script>
+{% endblock %}

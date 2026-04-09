@@ -1,0 +1,47 @@
+{% extends 'contacts/base.html' %}
+
+{% block title %}Login · Contact Book{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-card glass-card">
+
+    <div class="auth-copy">
+      <span class="eyebrow">☎ Contact Book</span>
+      <h2>Welcome back</h2>
+      <p>Sign in to access your personal contact book.</p>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="toast toast-{{ message.tags }} show" style="margin-bottom:14px;position:static;transform:none;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="auth-form" action="{% url 'contacts:login' %}">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="field">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {{ form.username.errors }}
+      </div>
+      <div class="field">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        {{ form.password.errors }}
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">
+        Sign In
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      No account? <a href="{% url 'contacts:register' %}">Create one</a>
+    </p>
+
+  </div>
+</section>
+{% endblock %}

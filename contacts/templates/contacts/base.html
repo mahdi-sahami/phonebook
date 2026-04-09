@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Contact Book{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'contacts/css/style.css' %}">
+</head>
+<body>
+
+<!-- decorative background: vintage rotary phone -->
+<div class="bg-deco" aria-hidden="true">
+  <svg class="bg-phone" viewBox="0 0 320 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- phone base / body -->
+    <rect x="40" y="120" width="240" height="270" rx="28" stroke="currentColor" stroke-width="3"/>
+    <!-- top speaker bar -->
+    <rect x="110" y="135" width="100" height="12" rx="6" stroke="currentColor" stroke-width="2"/>
+    <!-- dial circle -->
+    <circle cx="160" cy="250" r="72" stroke="currentColor" stroke-width="3"/>
+    <circle cx="160" cy="250" r="28" stroke="currentColor" stroke-width="2"/>
+    <!-- dial holes -->
+    <circle cx="160" cy="182" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="214" cy="205" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="232" cy="250" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="214" cy="295" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="160" cy="318" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="106" cy="295" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="88"  cy="250" r="7" stroke="currentColor" stroke-width="2"/>
+    <circle cx="106" cy="205" r="7" stroke="currentColor" stroke-width="2"/>
+    <!-- dial finger stop -->
+    <path d="M 152 245 L 142 255" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <!-- bottom label area -->
+    <rect x="110" y="355" width="100" height="18" rx="9" stroke="currentColor" stroke-width="2"/>
+    <!-- handset on top -->
+    <path d="M 60 30 C 60 10, 100 5, 110 25 L 118 55 C 108 60, 98 58, 90 52 L 85 75 L 235 75 L 230 52 C 222 58, 212 60, 202 55 L 210 25 C 220 5, 260 10, 260 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- handset cord -->
+    <path d="M 100 75 Q 80 95, 70 115" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+    <path d="M 220 75 Q 240 95, 250 115" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="page-wrap">
+  {% block content %}{% endblock %}
+</div>
+
+{% include "contacts/partials/toast.html" %}
+
+<script src="{% static 'contacts/js/app.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
