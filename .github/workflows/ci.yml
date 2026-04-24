@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["ai-agent"]
+    branches: ["main"]
   pull_request:
-    branches: ["ai-agent"]
+    branches: ["main"]
 
 jobs:
   test:
