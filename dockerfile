@@ -17,9 +17,14 @@ COPY . .
 
 RUN python manage.py collectstatic --noinput || true
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Copy entrypoint outside /app so the bind-mount volume does not override it.
+# Strip Windows carriage returns (\r) so the script runs on Linux regardless
+# of the line endings on the host machine.
+COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
+
+ 

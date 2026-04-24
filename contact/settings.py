@@ -46,11 +46,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'contacts.apps.ContactsConfig',
-    
+    'ai_agent.apps.AiAgentConfig',
 
-        
-    
-]
+
+]   
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -202,3 +201,39 @@ SITE_API_BASE_URL = "http://127.0.0.1:8000"
 
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
+
+# ── OpenAI ────────────────────────────────────────────────────────────────────
+OPENAI_API_KEY: str = config('OPENAI_API_KEY', default='')
+
+# ── ChromaDB ──────────────────────────────────────────────────────────────────
+# Set CHROMA_HOST to connect to a remote ChromaDB container (Docker / prod).
+# Leave empty to use a local persistent directory (development default).
+CHROMA_HOST: str = config('CHROMA_HOST', default='')
+CHROMA_PORT: int = config('CHROMA_PORT', default=8001, cast=int)
+CHROMA_PERSIST_DIR: str = config(
+    'CHROMA_PERSIST_DIR',
+    default=str(BASE_DIR / 'chroma_db'),
+)
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "ai_agent": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+# ── Session ───────────────────────────────────────────────────────────────────
+# Chat history lives only in the browser session — cleared when the browser
+# closes or the user logs out.
+SESSION_EXPIRE_AT_BROWSER_CLOSE: bool = True

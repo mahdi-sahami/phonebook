@@ -26,7 +26,7 @@ class ServiceResult:
     error_message: str = ""
 
 
-def _get_user_from_token(access_token: str) -> User | None:
+def get_user_from_token(access_token: str) -> User | None:
     """
     I decode a simplejwt access token and return the matching User, or None
     if the token is invalid or the user no longer exists.
@@ -91,40 +91,22 @@ class ContactApiService:
             data={"id": user.pk, "username": user.username},
         )
 
-    def list_contacts(self, access_token: str) -> ServiceResult:
+    def list_contacts(self, user: User) -> ServiceResult:
         """
         I fetch all contacts that belong to the authenticated user.
         """
         from .models import Contact
-
-        user = _get_user_from_token(access_token)
-        if user is None:
-            return ServiceResult(
-                ok=False,
-                status_code=401,
-                data=[],
-                error_message="Invalid or expired token.",
-            )
 
         contacts = list(
             Contact.objects.filter(owner=user).values("id", "name", "email", "phone", "address")
         )
         return ServiceResult(ok=True, status_code=200, data=contacts)
 
-    def create_contact(self, access_token: str, payload: dict[str, Any]) -> ServiceResult:
+    def create_contact(self, user: User, payload: dict[str, Any]) -> ServiceResult:
         """
         I create a new contact for the authenticated user.
         """
         from .models import Contact
-
-        user = _get_user_from_token(access_token)
-        if user is None:
-            return ServiceResult(
-                ok=False,
-                status_code=401,
-                data={},
-                error_message="Invalid or expired token.",
-            )
 
         try:
             contact = Contact.objects.create(
@@ -144,23 +126,17 @@ class ContactApiService:
             return ServiceResult(ok=True, status_code=201, data=data)
         except Exception as exc:
             return ServiceResult(
-                ok=False, status_code=400, data={}, error_message=str(exc)
-            )
-
-    def update_contact(self, access_token: str, contact_id: int, payload: dict[str, Any]) -> ServiceResult:
-        """
-        I update an existing contact owned by the authenticated user.
-        """
-        from .models import Contact
-
-        user = _get_user_from_token(access_token)
-        if user is None:
-            return ServiceResult(
                 ok=False,
                 status_code=401,
                 data={},
                 error_message="Invalid or expired token.",
             )
+
+    def update_contact(self, user: User, contact_id: int, payload: dict[str, Any]) -> ServiceResult:
+        """
+        I update an existing contact owned by the authenticated user.
+        """
+        from .models import Contact
 
         try:
             contact = Contact.objects.get(owner=user, id=contact_id)
@@ -183,20 +159,11 @@ class ContactApiService:
         }
         return ServiceResult(ok=True, status_code=200, data=data)
 
-    def delete_contact(self, access_token: str, contact_id: int) -> ServiceResult:
+    def delete_contact(self, user: User, contact_id: int) -> ServiceResult:
         """
         I delete a contact owned by the authenticated user.
         """
         from .models import Contact
-
-        user = _get_user_from_token(access_token)
-        if user is None:
-            return ServiceResult(
-                ok=False,
-                status_code=401,
-                data={},
-                error_message="Invalid or expired token.",
-            )
 
         try:
             contact = Contact.objects.get(owner=user, id=contact_id)

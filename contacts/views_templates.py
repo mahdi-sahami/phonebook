@@ -20,6 +20,8 @@ from .forms import (
 )
 from .selectors import apply_contact_filters, build_suggestions
 from .services import build_contact_api_service
+from django.contrib.auth.models import User
+from .services import get_user_from_token
 
 class JwtSessionMixin:
     """
@@ -35,7 +37,7 @@ class JwtSessionMixin:
         """
         return request.session.get(self.session_access_key)
 
-    def require_login(self, request: HttpRequest) -> str | HttpResponse:
+    def require_login(self, request: HttpRequest) -> User | HttpResponse:
         """
         I either return a valid access token or redirect the visitor to the
         login page if the session is unauthenticated.
@@ -43,7 +45,10 @@ class JwtSessionMixin:
         token: str | None = self.get_access_token(request)
         if not token:
             return redirect("contacts:login")
-        return token
+        user = get_user_from_token(token)
+        if not user:
+            return redirect("contacts:login")
+        return user
 
 
 class LoginPageView(View):
@@ -148,22 +153,11 @@ class ContactDashboardView(JwtSessionMixin, View):
         I load contacts from the API, apply local frontend filters, and render
         the portfolio-style dashboard.
         """
-        token_or_response = self.require_login(request)
-        if isinstance(token_or_response, HttpResponse):
-            return token_or_response
-
-        service = build_contact_api_service()
-        result = service.list_contacts(token_or_response)
-        if not result.ok:
-            messages.error(request, result.error_message or "Could not load contacts.")
-            return render(
-                request,
-                self.template_name,
-                {
-                    "contacts": [],
-                    "search_form": ContactSearchForm(request.GET or None),
-                },
-            )
+        user_or_response: User | HttpResponse = self.require_login(request)
+        if isinstance(user_or_response, HttpResponse):
+            
+            return user_or_response
+        
 
         search_form: ContactSearchForm = ContactSearchForm(request.GET or None)
         filters: dict[str, str] = {}
@@ -174,7 +168,7 @@ class ContactDashboardView(JwtSessionMixin, View):
                 if value is not None
             }
 
-        contacts: list[dict[str, Any]] = apply_contact_filters(result.data, filters)
+        contacts: list[dict[str, Any]] = apply_contact_filters(filters=filters, user=user_or_response)
         return render(
             request,
             self.template_name,
@@ -203,9 +197,9 @@ class ContactCreateView(JwtSessionMixin, View):
         """
         I validate the form and create the contact through the existing DRF API.
         """
-        token_or_response = self.require_login(request)
-        if isinstance(token_or_response, HttpResponse):
-            return token_or_response
+        user_or_response: User | HttpResponse = self.require_login(request)
+        if isinstance(user_or_response, HttpResponse):
+            return user_or_response
 
         form: ContactCreateUpdateForm = ContactCreateUpdateForm(request.POST)
         if not form.is_valid():
@@ -213,7 +207,7 @@ class ContactCreateView(JwtSessionMixin, View):
             return render(request, self.template_name, {"form": form})
 
         service = build_contact_api_service()
-        result = service.create_contact(token_or_response, form.cleaned_data)
+        result = service.create_contact(user=user_or_response, payload=form.cleaned_data)
         if not result.ok:
             messages.error(request, result.error_message or "Could not create contact.")
             return render(request, self.template_name, {"form": form})
@@ -244,12 +238,12 @@ class ContactUpdateView(JwtSessionMixin, View):
         I fetch contacts, locate the selected contact, and prefill the update
         form with existing values.
         """
-        token_or_response = self.require_login(request)
-        if isinstance(token_or_response, HttpResponse):
-            return token_or_response
+        user_or_response = self.require_login(request)
+        if isinstance(user_or_response, HttpResponse):
+            return user_or_response
 
         service = build_contact_api_service()
-        result = service.list_contacts(token_or_response)
+        result = service.list_contacts(user_or_response)
         if not result.ok:
             messages.error(request, "Could not load the selected contact.")
             return redirect("contacts:dashboard")
@@ -266,9 +260,9 @@ class ContactUpdateView(JwtSessionMixin, View):
         """
         I validate the form and update the selected contact through the API.
         """
-        token_or_response = self.require_login(request)
-        if isinstance(token_or_response, HttpResponse):
-            return token_or_response
+        user_or_response: User | HttpResponse = self.require_login(request)
+        if isinstance(user_or_response, HttpResponse):
+            return user_or_response
 
         form: ContactCreateUpdateForm = ContactCreateUpdateForm(request.POST)
         if not form.is_valid():
@@ -276,7 +270,7 @@ class ContactUpdateView(JwtSessionMixin, View):
             return render(request, self.template_name, {"form": form, "contact": {"id": contact_id}})
 
         service = build_contact_api_service()
-        result = service.update_contact(token_or_response, contact_id, form.cleaned_data)
+        result = service.update_contact(user=user_or_response, contact_id=contact_id, payload=form.cleaned_data)
         if not result.ok:
             messages.error(request, result.error_message or "Could not update contact.")
             return render(request, self.template_name, {"form": form, "contact": {"id": contact_id}})
@@ -303,12 +297,12 @@ class ContactDeleteView(JwtSessionMixin, View):
         """
         I delete the contact through the API and redirect back to the dashboard.
         """
-        token_or_response = self.require_login(request)
-        if isinstance(token_or_response, HttpResponse):
-            return token_or_response
+        user_or_response: User | HttpResponse = self.require_login(request)
+        if isinstance(user_or_response, HttpResponse):
+            return user_or_response
 
         service = build_contact_api_service()
-        result = service.delete_contact(token_or_response, contact_id)
+        result = service.delete_contact(user=user_or_response, contact_id=contact_id)
         if not result.ok:
             messages.error(request, result.error_message or "Could not delete contact.")
             return redirect("contacts:dashboard")
@@ -327,13 +321,13 @@ class LiveSearchSuggestionView(JwtSessionMixin, View):
         """
         I fetch contacts, generate suggestions, and return them to the browser.
         """
-        token_or_response = self.require_login(request)
-        if isinstance(token_or_response, HttpResponse):
+        user_or_response: User | HttpResponse = self.require_login(request)
+        if isinstance(user_or_response, HttpResponse):
             return JsonResponse({"suggestions": []}, status=401)
 
         query: str = request.GET.get("q", "").strip()
         service = build_contact_api_service()
-        result = service.list_contacts(token_or_response)
+        result = service.list_contacts(user=user_or_response)
 
         if not result.ok:
             return JsonResponse({"suggestions": []}, status=400)

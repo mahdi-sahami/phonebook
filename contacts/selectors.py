@@ -7,8 +7,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.contrib.auth.models import User
+from .models import Contact
+from django.db.models import Q
 
-def apply_contact_filters(contacts: list[dict[str, Any]], filters: dict[str, str]) -> list[dict[str, Any]]:
+def apply_contact_filters(filters: dict[str, str], user: User) -> list[dict[str, Any]]:
     """
     I apply search and advanced filters to the contact collection already
     returned by my API.
@@ -18,33 +21,20 @@ def apply_contact_filters(contacts: list[dict[str, Any]], filters: dict[str, str
     address: str = (filters.get("address") or "").strip().lower()
     ordering: str = (filters.get("ordering") or "name").strip()
 
-    filtered: list[dict[str, Any]] = contacts
+    q_name = Q(name__icontains=q) if q else Q()
+    q_phone = Q(phone__icontains=q) if q else Q()
+    q_address = Q(address__icontains=address) if address else Q()
+    q_email = Q(email__icontains=email) if email else Q()
+    q_owner = Q(owner=user)
 
-    if q:
-        filtered = [
-            contact
-            for contact in filtered
-            if q in str(contact.get("name", "")).lower()
-            or q in str(contact.get("phone", "")).lower()
-            or q in str(contact.get("email", "")).lower()
-            or q in str(contact.get("address", "")).lower()
-        ]
-
-    if email:
-        filtered = [
-            contact for contact in filtered if email in str(contact.get("email", "")).lower()
-        ]
-
-    if address:
-        filtered = [
-            contact for contact in filtered if address in str(contact.get("address", "")).lower()
-        ]
-
-    reverse: bool = ordering.startswith("-")
-    field_name: str = ordering.lstrip("-")
-
-    filtered.sort(key=lambda item: str(item.get(field_name, "")).lower(), reverse=reverse)
-    return filtered
+    result = Contact.objects.filter(
+        q_owner & (
+            q_name | q_phone | q_email | q_address
+        )
+    ).order_by(ordering)
+    
+    return list(result.values())
+    
 
 
 def build_suggestions(contacts: list[dict[str, Any]], query: str, limit: int = 6) -> list[str]:
