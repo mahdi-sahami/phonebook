@@ -1,0 +1,192 @@
+{% extends 'contacts/base.html' %}
+{% load static %}
+
+{% block title %}AI Assistant · Contact Book{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+
+  {# ── Sidebar ────────────────────────────────────────────────────────── #}
+  {% include 'contacts/partials/sidebar.html' %}
+
+  {# ── Main area ──────────────────────────────────────────────────────── #}
+  <main class="app-main">
+
+    <section class="hero-panel glass-card">
+      <div>
+        <h2 style="color:var(--primary)">&#x2728; AI Assistant</h2>
+        <p style="color:var(--muted);margin-top:4px;font-size:.9rem;">
+          Ask me to add, edit, delete, or search your contacts.
+          Your conversation is private and erased when you log out.
+        </p>
+      </div>
+      <button class="btn btn-ghost" id="clear-btn" onclick="clearChat()">
+        Clear chat
+      </button>
+    </section>
+
+    {# ── Chat window ───────────────────────────────────────────────────── #}
+    <section class="glass-card chat-window" id="chat-window">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-bubble ai-bubble">
+          <div class="bubble-avatar">AI</div>
+          <div class="bubble-body">
+            Hello, <strong>{{ username }}</strong>! I'm your Contact Book assistant.
+            I can create, update, delete, or search your contacts.
+            What would you like to do?
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# ── Input bar ─────────────────────────────────────────────────────── #}
+    <div class="chat-input-bar glass-card">
+      <input
+        type="text"
+        id="chat-input"
+        class="input"
+        placeholder="Type a message… e.g. 'Add Marco Rossi, phone 0612345678'"
+        autocomplete="off"
+      />
+      <button class="btn btn-primary" id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const CHAT_API_URL  = "{% url 'ai_agent:chat_api' %}";
+  const CLEAR_API_URL = "{% url 'ai_agent:clear_chat' %}";
+
+  const messagesEl = document.getElementById("chat-messages");
+  const inputEl    = document.getElementById("chat-input");
+  const sendBtn    = document.getElementById("send-btn");
+
+  /* ── scroll to bottom ───────────────────────────────────────────────── */
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  /* ── append a bubble ────────────────────────────────────────────────── */
+  function appendBubble(role, text) {
+    const wrap = document.createElement("div");
+    wrap.className = "chat-bubble " + (role === "user" ? "user-bubble" : "ai-bubble");
+
+    const avatar = document.createElement("div");
+    avatar.className = "bubble-avatar";
+    avatar.textContent = role === "user" ? "You" : "AI";
+
+    const body = document.createElement("div");
+    body.className = "bubble-body";
+    /* Render newlines as <br> and preserve basic markdown bold */
+    body.innerHTML = escapeHtml(text)
+      .replace(/\n/g, "<br>")
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`(.*?)`/g, "<code>$1</code>");
+
+    if (role === "user") {
+      wrap.appendChild(body);
+      wrap.appendChild(avatar);
+    } else {
+      wrap.appendChild(avatar);
+      wrap.appendChild(body);
+    }
+
+    messagesEl.appendChild(wrap);
+    scrollToBottom();
+  }
+
+  /* ── typing indicator ───────────────────────────────────────────────── */
+  function showTyping() {
+    const wrap = document.createElement("div");
+    wrap.className = "chat-bubble ai-bubble";
+    wrap.id = "typing-indicator";
+
+    const avatar = document.createElement("div");
+    avatar.className = "bubble-avatar";
+    avatar.textContent = "AI";
+
+    const body = document.createElement("div");
+    body.className = "bubble-body typing-dots";
+    body.innerHTML = "<span></span><span></span><span></span>";
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(body);
+    messagesEl.appendChild(wrap);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    const el = document.getElementById("typing-indicator");
+    if (el) el.remove();
+  }
+
+  /* ── XSS-safe escaping ──────────────────────────────────────────────── */
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  /* ── send message ───────────────────────────────────────────────────── */
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    inputEl.value = "";
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
+
+    appendBubble("user", text);
+    showTyping();
+
+    try {
+      const res = await fetch(CHAT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await res.json();
+      hideTyping();
+
+      if (res.ok) {
+        appendBubble("ai", data.response || "(no response)");
+      } else {
+        appendBubble("ai", "⚠️ " + (data.error || "Something went wrong."));
+      }
+    } catch (err) {
+      hideTyping();
+      appendBubble("ai", "⚠️ Network error. Please try again.");
+    } finally {
+      inputEl.disabled = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  /* ── clear chat ─────────────────────────────────────────────────────── */
+  async function clearChat() {
+    try {
+      await fetch(CLEAR_API_URL, { method: "POST" });
+    } catch (_) { /* ignore */ }
+    messagesEl.innerHTML = "";
+    appendBubble("ai", "Chat cleared. How can I help you?");
+  }
+
+  /* ── keyboard shortcut ──────────────────────────────────────────────── */
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  scrollToBottom();
+</script>
+{% endblock %}

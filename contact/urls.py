@@ -43,11 +43,11 @@ urlpatterns = [
     path("", include("contacts.urls_templates", namespace="contacts_templates")),
     path("api/login/", TokenObtainPairView.as_view(), name="login"),
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh") ,
-    path('contacts/', include('contacts.urls')), 
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path('contacts/', include('contacts.urls')),
     path('doc/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path("api/register/", RegisterView.as_view()),
-
+    path("ai/", include("ai_agent.urls", namespace="ai_agent")),
 ]
 
 

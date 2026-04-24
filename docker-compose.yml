@@ -1,0 +1,80 @@
+# ── Contact Book  –  full stack
+# Services:
+#   web    Django application (gunicorn / dev server)
+#   db     PostgreSQL 16
+#   chroma ChromaDB vector store (RAG knowledge base)
+# ────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: contact_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-contact_db}
+      POSTGRES_USER:     ${DB_USER:-contact_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-contact_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-contact_user} -d ${DB_NAME:-contact_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── ChromaDB vector store ───────────────────────────────────────────────────
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: contact_chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "False"
+      ALLOW_RESET: "True"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Django web application ─────────────────────────────────────────────────
+  web:
+    build: .
+    container_name: contact_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Database
+      DB_ENGINE:   django.db.backends.postgresql
+      DB_NAME:     ${DB_NAME:-contact_db}
+      DB_USER:     ${DB_USER:-contact_user}
+      DB_PASSWORD: ${DB_PASSWORD:-contact_pass}
+      DB_HOST:     db
+      DB_PORT:     5432
+      # ChromaDB  (connects to the chroma service above)
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8000
+    depends_on:
+      db:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+
+# ── Named volumes ──────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  chroma_data:
+  static_files:
+  media_files:
