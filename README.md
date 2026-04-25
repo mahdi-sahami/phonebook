@@ -40,7 +40,7 @@ The Django admin panel is fully customised for a better user experience - list v
 
 ## Main Application
 
-<img src="demo/contact.gif" alt="Main app demo — contact CRUD in action" />
+<img src="demo/dashboard.gif" alt="Main app demo — contact CRUD in action" />
 
 The core phonebook app is production-ready and usable end-to-end from both the web UI and the REST API.
 
@@ -67,7 +67,7 @@ The core phonebook app is production-ready and usable end-to-end from both the w
 
 ## AI Agent Layer
 
-<img src="demo/ai agent.gif" alt="AI agent demo - managing contacts through natural language" />
+<img src="demo/ai.gif" alt="AI agent demo - managing contacts through natural language" />
 
 The second layer is a fully autonomous AI agent. Users manage their contacts through natural language - the agent decides which tool to call, executes it, and replies with the result.
 
