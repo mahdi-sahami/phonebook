@@ -36,6 +36,7 @@ password: test
 <img src="demo/admin panel.gif" alt="Django admin panel demo" />
 
 The Django admin panel is fully customised for a better user experience - list views show computed fields, search is wired up across related models, and inline editing is available for related objects.
+
 ---
 
 ## Main Application
