@@ -12,6 +12,8 @@ staticfiles/
 # Media files
 media/
 
+chroma_db/*
+
 # Distribution / packaging
 .Python
 build/
